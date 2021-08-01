@@ -45,7 +45,7 @@ namespace Hat
 
         public static Setting deSerialiseSetting(string path){
             var Json = File.ReadAllText(path);
-            return JsonConvert.DeserializeObject<Setting>(Json);
+            return JsonConvert.DeserializeObject<Setting>(Json, new JsonSerializerSettings() { ObjectCreationHandling = ObjectCreationHandling.Replace });
         }
         public static void SetScale(this GameObject gameObject,float scale){
             var localScale = gameObject.transform.localScale;
