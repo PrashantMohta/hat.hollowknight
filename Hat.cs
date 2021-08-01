@@ -17,7 +17,14 @@ namespace Hat
         public float offsetZ = -0.5f;
         public bool enableWorld = true;
         public bool reduceChaos = true;
-        public List<string> limitTo = new List<string>{"Bod","npc","shop","Door","Detect Range","door_sly","Grimmsteed FG","Weaverling","Grimmchild"};
+        public List<string> limitTo = new List<string>{
+                                                        "npc",
+                                                        "boss",
+                                                        "shop",
+                                                        "door_sly",
+                                                        "Weaverling",
+                                                        "Grimmchild"
+                                                    };
         public bool verbose = false;
         public bool randomWorldHats = true;
         public Setting(){}
