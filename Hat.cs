@@ -13,8 +13,6 @@ using Newtonsoft.Json;
 using Satchel;
 using static Hat.Utils;
 
-using System.Diagnostics;
-
 namespace Hat
 {
     public class HatState : MonoBehaviour{
