@@ -157,7 +157,6 @@ namespace Hat
             foreach(var gameObj in GOList){
                 if(gameObj == null) { continue; }
                 createHatConditionally(gameObj);
-                //yield return null;
             }
 
             lastTime = DateTime.Now;
