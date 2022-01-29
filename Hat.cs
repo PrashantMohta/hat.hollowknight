@@ -110,7 +110,7 @@ namespace Hat
         
         public override string GetVersion()
         {
-            return "1.0";
+            return "1.4";
         }
 
         public override void Initialize()
@@ -132,7 +132,7 @@ namespace Hat
                 Utils.ExtractHatPng(hatPath);
             }
 
-            ModHooks.Instance.HeroUpdateHook += update;
+            ModHooks.HeroUpdateHook += update;
         }
 
 
