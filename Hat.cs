@@ -1,243 +1,208 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 
 using GlobalEnums;
 using Modding;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
 using Newtonsoft.Json;
+using Satchel;
+using static Hat.Utils;
+
+using System.Diagnostics;
 
 namespace Hat
 {
-    public class Setting{
-        public string hat = "hat.png";
-        public float offsetX  = 0f;
-        public float offsetY = 1.1f;
-        public float offsetZ = -0.5f;
-        public bool enableWorld = true;
-        public bool reduceChaos = true;
-        public List<string> limitTo = new List<string>{
-                                                        "npc",
-                                                        "boss",
-                                                        "shop",
-                                                        "door_sly",
-                                                        "Weaverling",
-                                                        "Grimmchild"
-                                                    };
-        public bool verbose = false;
-        public bool randomWorldHats = true;
-        public Setting(){}
-        public Setting(string hat,float offsetX,float offsetY,float offsetZ,bool enableWorld,bool randomWorldHats,bool reduceChaos,List<string> limitTo,bool verbose){
-            this.hat = hat;
-            this.offsetX = offsetX;
-            this.offsetY = offsetY;
-            this.offsetZ = offsetZ;
-
-            this.enableWorld = enableWorld;
-            this.randomWorldHats = randomWorldHats;
-            this.reduceChaos = reduceChaos;
-            this.limitTo = limitTo;
-            this.verbose = verbose;
-        }
-    }
-    public static class Utils {
-
-        public static System.Random rand = new System.Random();
-        public static Vector3 ZeroVector = new Vector3(0,0,0);
-        public static void serialiseSetting(string path,Setting setting){
-            var Json = JsonConvert.SerializeObject(setting, Formatting.Indented);
-            File.WriteAllText(path,Json);
-        }
-
-        public static Setting deSerialiseSetting(string path){
-            var Json = File.ReadAllText(path);
-            return JsonConvert.DeserializeObject<Setting>(Json, new JsonSerializerSettings() { ObjectCreationHandling = ObjectCreationHandling.Replace });
-        }
-        public static void SetScale(this GameObject gameObject,float scale){
-            var localScale = gameObject.transform.localScale;
-            localScale.x = Math.Abs(scale);
-            localScale.y = Math.Abs(scale);
-            gameObject.transform.localScale = localScale;
-        }
-        public static GameObject FindGameObjectInChildren( this GameObject gameObject, string name )
-        {
-            if( gameObject == null )
-                return null;
-
-            foreach( var t in gameObject.GetComponentsInChildren<Transform>( true ) )
-            {
-                if( t.name == name )
-                    return t.gameObject;
-            }
-            return null;
-        }
-
-        public static void ExtractHatPng(string path){
-            
-            Assembly asm = Assembly.GetExecutingAssembly();
-            foreach (string res in asm.GetManifestResourceNames())
-            {   
-                if(!res.EndsWith("hat.png")) {
-                    continue;
-                } 
-                using (Stream s = asm.GetManifestResourceStream(res))
-                {
-                        if (s == null) continue;
-                        var buffer = new byte[s.Length];
-                        s.Read(buffer, 0, buffer.Length);
-                        File.WriteAllBytes(path,buffer);
-                        s.Dispose();
-                }
-            }
-        }
+    public class HatState : MonoBehaviour{
+        public bool hasHat = false;
     }
     public class Hat : Mod
     {
-
         internal static Hat Instance;
-
-        string currentDirectory = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),"Hats");
-
+        string currentDirectory = Path.Combine(AssemblyUtils.getCurrentDirectory(),"Hats");
         Setting settings = new Setting();
-        private BoxCollider2D heroCollider;
         private GameObject hat;
-
-        private List<Texture2D> hats = new List<Texture2D>();
-
-
-
         
+        private List<Texture2D> hats = new List<Texture2D>();
+        private Dictionary<int,Sprite> hatSprite = new Dictionary<int,Sprite>();
         public override string GetVersion()
         {
-            return "1.4";
+            return "1.5";
         }
 
         public override void Initialize()
         {
             Instance = this;
-            if(!Directory.Exists(currentDirectory)){
-                Directory.CreateDirectory(currentDirectory);
-            }
+            IoUtils.EnsureDirectory(currentDirectory);
             
             var settingsPath = Path.Combine(currentDirectory,"settings.json");
             if(File.Exists(settingsPath)){
-                settings = Utils.deSerialiseSetting(settingsPath);
+                settings = deSerialiseSetting(settingsPath);
             }
-            Utils.serialiseSetting(settingsPath,settings);
+            serialiseSetting(settingsPath,settings);
 
 
             var hatPath = Path.Combine(currentDirectory,"hat.png");
             if(!File.Exists(hatPath)) {
-                Utils.ExtractHatPng(hatPath);
+                ExtractHatPng(hatPath);
             }
 
-            ModHooks.HeroUpdateHook += update;
+            loadhats(); // load for world mode
+            preCreateHat(); // pre-create hat
+            On.HeroController.Start += HeroControllerStart;
         }
 
-
-        public Texture2D LoadTexture(string name){
-            Texture2D tex = new Texture2D(2, 2);
-            try{
-                byte[] texBytes = File.ReadAllBytes(Path.Combine(currentDirectory,name));            
-                tex.LoadImage(texBytes);
-                tex.Apply();
-            } catch (Exception e){
-                
-            }
-            return tex;
-        }
 
         private void createHatOnParent(GameObject Parent,bool force){
-            if(Parent.FindGameObjectInChildren(Parent.name + " hat") != null) {return;}
-            Vector3 center = getParentColliderCenter(Parent);
-            if(center == Utils.ZeroVector) {return;}
-            if(Parent.GetComponent<HealthManager>() == null && Parent.LocateMyFSM("npc_control") == null && !force){return;}
-            if(settings.verbose){
-                Log("Adding Hat to" + Parent.name);
+            try{
+                var HatState = Parent.GetAddComponent<HatState>();
+                if(!force && !HatState.hasHat && Parent.GetComponent<HealthManager>() == null && Parent.LocateMyFSM("npc_control") == null ){
+                    HatState.hasHat = false;
+                    return;
+                }
+                if(HatState.hasHat || Parent.FindGameObjectInChildren(Parent.name + " hat") != null) {
+                    return;
+                }
+                HatState.hasHat = true;
+                Vector3 center = getParentColliderCenter(Parent);
+                if(center == ZeroVector) {return;}
+                if(settings.verbose){
+                    Log("Adding Hat to" + Parent.name);
+                }
+                var hat = new GameObject(Parent.name + " hat");
+                SpriteRenderer sr = hat.AddComponent<SpriteRenderer>();
+                float scale = Parent.transform.localScale.x;
+                var index = rand.Next(hats.Count);
+                Sprite spr;
+                if(hatSprite.TryGetValue(index,out spr)){
+                    sr.sprite = spr;
+                } else {
+                    Texture2D tex = hats[index];
+                    sr.sprite = Sprite.Create(tex,new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f),64f,0,SpriteMeshType.FullRect);
+                    hatSprite[index] = sr.sprite;
+                }
+                sr.color = new Color(1f, 1f, 1f, 1.0f);
+                hat.SetActive(true);
+                hat.SetScale(Parent.transform.localScale.y);
+                hat.transform.position = Parent.transform.position + new Vector3(0,Parent.transform.localScale.y*1.1f,-0.0001f); //center + new Vector3(settings.offsetX,settings.offsetY,settings.offsetZ);
+                hat.transform.SetParent(Parent.transform,true);
+                
+            } catch (Exception e){
+                Log(e.ToString());
             }
-            var hat = new GameObject(Parent.name + " hat");
-            SpriteRenderer sr = hat.AddComponent<SpriteRenderer>();
-            float scale = Parent.transform.localScale.x;
-            Texture2D tex = hats[Utils.rand.Next(hats.Count)];
-            sr.sprite = Sprite.Create(tex,new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f),64f);
-            sr.color = new Color(1f, 1f, 1f, 1.0f);
-            hat.SetActive(true);
-            hat.SetScale(Parent.transform.localScale.y);
-            hat.transform.position = Parent.transform.position + new Vector3(0,Parent.transform.localScale.y*1.1f,-0.0001f); //center + new Vector3(settings.offsetX,settings.offsetY,settings.offsetZ);
-            hat.transform.SetParent(Parent.transform,true);
         }
-        private void createHat(){
+
+        private void preCreateHat(){
             hat = new GameObject("herohat");
+            GameObject.DontDestroyOnLoad(hat);
             SpriteRenderer sr = hat.AddComponent<SpriteRenderer>();
-            Texture2D tex =  LoadTexture(settings.hat);
-            Vector3 center = getHeroColliderCenter();
-            float scale = HeroController.instance.gameObject.transform.localScale.x;
-            sr.sprite = Sprite.Create(tex,new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f),64f);
+            Texture2D tex =  LoadTexture(currentDirectory,settings.hat);
+            sr.sprite = Sprite.Create(tex,new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f),64f,0,SpriteMeshType.FullRect);
             sr.color = new Color(1f, 1f, 1f, 1.0f);
+            hat.SetActive(false);
+        }
+        private void attachHat(){
+            Vector3 center = getParentColliderCenter(HeroController.instance.gameObject);
+            float scale = HeroController.instance.gameObject.transform.localScale.x;
             hat.SetActive(true);
             hat.SetScale(HeroController.instance.gameObject.transform.localScale.y);
             hat.transform.position = center + new Vector3(settings.offsetX,settings.offsetY,settings.offsetZ);
             hat.transform.SetParent(HeroController.instance.gameObject.transform,true);
         }
 
-        private Vector3 getParentColliderCenter(GameObject Parent){
-            var collider = Parent.GetComponent<BoxCollider2D>();
-            if(collider != null){
-                return collider.bounds.center;
-            } 
-            return Utils.ZeroVector;
-        }
-        private Vector3 getHeroColliderCenter(){
-            if(heroCollider == null){
-                heroCollider = HeroController.instance.gameObject.GetComponent<BoxCollider2D>();
-            }
-            return heroCollider.bounds.center;
-        }
-
         DateTime lastTime = DateTime.Now;
-
+        bool pending = false;
         public void loadhats(){
             if(!settings.enableWorld){ return;}
             if(settings.randomWorldHats){
                 foreach(string hatpng in Directory.GetFiles(currentDirectory,"*.png")){
-                    hats.Add(LoadTexture(hatpng));
+                    hats.Add(LoadTexture(currentDirectory,hatpng));
                 }
             } else {
-               hats.Add(LoadTexture(settings.hat));
+               hats.Add(LoadTexture(currentDirectory,settings.hat));
             }
         }
-        public void updateHatPos(){
-            if(settings.enableWorld){
-                var currentTime = DateTime.Now;
-                if ((currentTime - lastTime).TotalMilliseconds > 1000) {
-                    foreach(GameObject gameObj in GameObject.FindObjectsOfType<GameObject>())
-                    {   
-                        if(settings.reduceChaos){
-                            foreach(var name in settings.limitTo){
-                                if(gameObj.name.ToLower().Contains(name.ToLower())){
-                                    createHatOnParent(gameObj,true);
-                                    continue;
-                                }
-                            }
-                            createHatOnParent(gameObj,false);
-                        } else {
-                            createHatOnParent(gameObj,true);
-                        }
+
+        internal void createHatConditionally(GameObject gameObj){
+            if(gameObj.GetComponent<HatState>() != null) { return; }
+            if(settings.reduceChaos){
+                var goName = gameObj.name.ToLower();
+                foreach(var name in settings.limitTo){
+                    if(goName.Contains(name.ToLower())){
+                        createHatOnParent(gameObj,true);
+                        break;
                     }
-                    
                 }
+                createHatOnParent(gameObj,false);
+            } else {
+                createHatOnParent(gameObj,true);
             }
         }
+        internal IEnumerator addHats( float delay = 0){
+            if(!settings.enableWorld){
+                pending = false;
+                yield break; 
+            }
+            var currentTime = DateTime.Now;
+            if ((currentTime - lastTime).TotalMilliseconds <= 1000) {
+                pending = false;
+                yield break; 
+            }
+            if(delay > 0){
+                yield return new WaitForSeconds(delay);
+            }
+            var GOList = GameObject.FindObjectsOfType<GameObject>();
+            foreach(var gameObj in GOList){
+                if(gameObj == null) { continue; }
+                createHatConditionally(gameObj);
+                //yield return null;
+            }
+
+            lastTime = DateTime.Now;
+            pending = false;
+        }
+
+        public void HeroControllerStart(On.HeroController.orig_Start orig,HeroController self){
+            orig(self);
+            attachHat();
+            ModHooks.HeroUpdateHook += update;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += activeSceneChanged;
+            On.HutongGames.PlayMaker.Actions.ActivateGameObject.DoActivateGameObject += objectActivated;
+        }
+
+        public void ManageHatCoroutine(bool restart = false){
+            if(restart){
+                if(hatCoro != null){
+                    GameManager.instance.StopCoroutine(hatCoro);
+                }
+                lastTime = DateTime.Now.AddSeconds(-20000); //force next update to trigger
+                pending = false;
+            }
+            if(!pending){
+                pending = true;
+                hatCoro = GameManager.instance.StartCoroutine(addHats(restart ? 0.01f : 0f));
+            }
+        }
+        public void activeSceneChanged(Scene from, Scene to){
+            if(!GameManager.instance.IsGameplayScene()) { return; } 
+            ManageHatCoroutine(true);
+        }
+        internal void objectActivated(On.HutongGames.PlayMaker.Actions.ActivateGameObject.orig_DoActivateGameObject orig, HutongGames.PlayMaker.Actions.ActivateGameObject self){
+            orig(self);
+            if(self.gameObject.GameObject.Value != null){
+                if(!GameManager.instance.IsGameplayScene()) { return; } 
+                createHatConditionally(self.gameObject.GameObject.Value);
+            }
+        }
+        public Coroutine hatCoro;
         public void update()
         {
-            if(HeroController.instance != null && HeroController.instance.gameObject!= null){
-                if(hat == null) {
-                    createHat();
-                    loadhats(); // load for world mode
-                }
-                updateHatPos();
-            }
+            if(!GameManager.instance.IsGameplayScene()) { return; } 
+            ManageHatCoroutine();
         }
 
     }
