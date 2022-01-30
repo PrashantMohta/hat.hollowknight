@@ -12,13 +12,13 @@ using Newtonsoft.Json;
 namespace Hat
 {
     public class Setting{
-        public string hat = "hat.png";
-        public float offsetX  = 0f;
-        public float offsetY = 1.1f;
-        public float offsetZ = -0.5f;
-        public bool enableWorld = true;
-        public bool reduceChaos = true;
-        public List<string> limitTo = new List<string>{
+        public string hat {get; set;} = "hat.png";
+        public float offsetX {get; set;}  = 0f;
+        public float offsetY {get; set;} = 1.1f;
+        public float offsetZ {get; set;} = -0.5f;
+        public bool enableWorld {get; set;} = true;
+        public bool reduceChaos {get; set;} = true;
+        public List<string> limitTo {get; set;} = new List<string>{
                                                         "npc",
                                                         "boss",
                                                         "shop",
@@ -26,15 +26,14 @@ namespace Hat
                                                         "Weaverling",
                                                         "Grimmchild"
                                                     };
-        public bool verbose = false;
-        public bool randomWorldHats = true;
+        public bool verbose {get; set;} = false;
+        public bool randomWorldHats {get; set;} = true;
         public Setting(){}
         public Setting(string hat,float offsetX,float offsetY,float offsetZ,bool enableWorld,bool randomWorldHats,bool reduceChaos,List<string> limitTo,bool verbose){
             this.hat = hat;
             this.offsetX = offsetX;
             this.offsetY = offsetY;
             this.offsetZ = offsetZ;
-
             this.enableWorld = enableWorld;
             this.randomWorldHats = randomWorldHats;
             this.reduceChaos = reduceChaos;

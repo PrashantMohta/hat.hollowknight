@@ -85,7 +85,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-      <EmbeddedResource Include="hat.png" />
+      <EmbeddedResource Include="res\hat.png" />
+      <EmbeddedResource Include="res\knight.png" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
   	<Copy SourceFiles="$(TargetPath);$(TargetDir)$(TargetName).pdb;$(TargetDir)$(TargetName).xml" DestinationFolder="$(HollowKnightModsDirectory)\Hat" SkipUnchangedFiles="true" />
