@@ -183,14 +183,14 @@ namespace Hat
         public void ManageHatCoroutine(bool restart = false){
             if(restart){
                 if(hatCoro != null){
-                    GameManager.instance.StopCoroutine(hatCoro);
+                    CoroutineHelper.GetRunner().StopCoroutine(hatCoro);
                 }
                 lastTime = DateTime.Now.AddSeconds(-20000); //force next update to trigger
                 pending = false;
             }
             if(!pending){
                 pending = true;
-                hatCoro = GameManager.instance.StartCoroutine(addHats(restart ? 0.01f : 0f));
+                hatCoro = CoroutineHelper.GetRunner().StartCoroutine(addHats(restart ? 0.01f : 0f));
             }
         }
         public void activeSceneChanged(Scene from, Scene to){
