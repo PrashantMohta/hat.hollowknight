@@ -18,31 +18,39 @@ namespace Hat
     public class HatState : MonoBehaviour{
         public bool hasHat = false;
     }
-    public class Hat : Mod
+    public class Hat : Mod ,  IGlobalSettings<Setting> , ICustomMenuMod
     {
         internal static Hat Instance;
         string currentDirectory = Path.Combine(AssemblyUtils.getCurrentDirectory(),"Hats");
-        Setting settings = new Setting();
+        public static Setting settings { get; set; } = new Setting();
         private GameObject hat;
         
         private List<Texture2D> hats = new List<Texture2D>();
         private Dictionary<int,Sprite> hatSprite = new Dictionary<int,Sprite>();
         public override string GetVersion()
         {
-            return "1.5";
+            return "2.0";
         }
-
+        public void OnLoadGlobal(Setting s)
+        {
+            settings = s;
+        }
+        public Setting OnSaveGlobal()
+        {
+            return settings;
+        }
+        public  bool ToggleButtonInsideMenu {get;}= false;
+        public MenuScreen GetMenuScreen(MenuScreen modListMenu, ModToggleDelegates? toggleDelegates)
+        {
+            if(HatMenu.MenuRef == null){
+                HatMenu.MenuRef = HatMenu.PrepareMenu();
+            }
+            return HatMenu.MenuRef.GetMenuScreen(modListMenu);
+        }
         public override void Initialize()
         {
             Instance = this;
             IoUtils.EnsureDirectory(currentDirectory);
-            
-            var settingsPath = Path.Combine(currentDirectory,"settings.json");
-            if(File.Exists(settingsPath)){
-                settings = deSerialiseSetting(settingsPath);
-            }
-            serialiseSetting(settingsPath,settings);
-
 
             var hatPath = Path.Combine(currentDirectory,"hat.png");
             if(!File.Exists(hatPath)) {
@@ -50,7 +58,7 @@ namespace Hat
             }
 
             loadhats(); // load for world mode
-            preCreateHat(); // pre-create hat
+            hat = preCreateHat(); // pre-create hat
             On.HeroController.Start += HeroControllerStart;
         }
 
@@ -94,16 +102,17 @@ namespace Hat
             }
         }
 
-        private void preCreateHat(){
-            hat = new GameObject("herohat");
+        internal GameObject preCreateHat(){
+            var hat = new GameObject("herohat");
             GameObject.DontDestroyOnLoad(hat);
             SpriteRenderer sr = hat.AddComponent<SpriteRenderer>();
             Texture2D tex =  LoadTexture(currentDirectory,settings.hat);
             sr.sprite = Sprite.Create(tex,new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f),64f,0,SpriteMeshType.FullRect);
             sr.color = new Color(1f, 1f, 1f, 1.0f);
             hat.SetActive(false);
+            return hat;
         }
-        private void attachHat(){
+        internal void attachHat(){
             Vector3 center = getParentColliderCenter(HeroController.instance.gameObject);
             float scale = HeroController.instance.gameObject.transform.localScale.x;
             hat.SetActive(true);
@@ -174,14 +183,14 @@ namespace Hat
         public void ManageHatCoroutine(bool restart = false){
             if(restart){
                 if(hatCoro != null){
-                    GameManager.instance.StopCoroutine(hatCoro);
+                    CoroutineHelper.GetRunner().StopCoroutine(hatCoro);
                 }
                 lastTime = DateTime.Now.AddSeconds(-20000); //force next update to trigger
                 pending = false;
             }
             if(!pending){
                 pending = true;
-                hatCoro = GameManager.instance.StartCoroutine(addHats(restart ? 0.01f : 0f));
+                hatCoro = CoroutineHelper.GetRunner().StartCoroutine(addHats(restart ? 0.01f : 0f));
             }
         }
         public void activeSceneChanged(Scene from, Scene to){
