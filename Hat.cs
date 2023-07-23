@@ -12,6 +12,8 @@ using UnityEngine.SceneManagement;
 using Newtonsoft.Json;
 using Satchel;
 using static Hat.Utils;
+using Hat.Hkmp;
+using Hkmp.Api.Server;
 
 namespace Hat
 {
@@ -22,14 +24,18 @@ namespace Hat
     {
         internal static Hat Instance;
         string currentDirectory = Path.Combine(AssemblyUtils.getCurrentDirectory(),"Hats");
-        Setting settings = new Setting();
+        public Setting settings = new Setting();
         private GameObject hat;
         
         private List<Texture2D> hats = new List<Texture2D>();
         private Dictionary<int,Sprite> hatSprite = new Dictionary<int,Sprite>();
+
+        internal HatMultiplayerClient MpClientInstance;
+        internal HatMultiplayerServer MpServerInstance;
+
         public override string GetVersion()
         {
-            return "1.5";
+            return AssemblyUtils.GetAssemblyVersionHash(Constants.VERSION);
         }
 
         public override void Initialize()
@@ -52,6 +58,18 @@ namespace Hat
             loadhats(); // load for world mode
             preCreateHat(); // pre-create hat
             On.HeroController.Start += HeroControllerStart;
+            if(ModHooks.GetMod("HkmpPouch") is Mod)
+            {
+                if (MpClientInstance == null)
+                {
+                    MpClientInstance = new HatMultiplayerClient();
+                }
+                if (MpServerInstance == null)
+                {
+                    MpServerInstance = new HatMultiplayerServer();
+                    ServerAddon.RegisterAddon(MpServerInstance);
+                }
+            }
         }
 
 
@@ -93,6 +111,18 @@ namespace Hat
                 Log(e.ToString());
             }
         }
+        public void changeLocalHat(Texture2D tex)
+        {
+            SpriteRenderer sr = hat.GetAddComponent<SpriteRenderer>();
+            sr.sprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 64f, 0, SpriteMeshType.FullRect);
+        }
+
+        public void resetLocalHat()
+        {
+            Texture2D tex = LoadTexture(currentDirectory, settings.hat);
+            changeLocalHat(tex);
+        }
+
 
         private void preCreateHat(){
             hat = new GameObject("herohat");
@@ -104,11 +134,9 @@ namespace Hat
             hat.SetActive(false);
         }
         private void attachHat(){
-            Vector3 center = getParentColliderCenter(HeroController.instance.gameObject);
-            float scale = HeroController.instance.gameObject.transform.localScale.x;
             hat.SetActive(true);
             hat.SetScale(HeroController.instance.gameObject.transform.localScale.y);
-            hat.transform.position = center + new Vector3(settings.offsetX,settings.offsetY,settings.offsetZ);
+            hat.transform.position = HeroController.instance.gameObject.transform.position + new Vector3(settings.offsetX,settings.offsetY,settings.offsetZ);
             hat.transform.SetParent(HeroController.instance.gameObject.transform,true);
         }
 

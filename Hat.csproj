@@ -3,7 +3,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Hat</RootNamespace>
     <AssemblyName>Hat</AssemblyName>
-    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
     <TargetFramework>net472</TargetFramework>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VanillaFiles>..\Vanilla</VanillaFiles>
-    <ModdingAPi>..\HollowKnight.Modding\OutputFinal</ModdingAPi>
-    <HollowKnightModsDirectory>..\linkedtoHKMods</HollowKnightModsDirectory>
+    <VanillaFiles>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</VanillaFiles>
+    <ModdingAPi>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</ModdingAPi>
+    <HollowKnightModsDirectory>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods</HollowKnightModsDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -80,9 +80,15 @@
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>$(VanillaFiles)\UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
-    <Reference Include="Satchel">
-      <HintPath>..\Satchel\bin\Debug\Satchel.dll</HintPath>
-    </Reference>
+	  <Reference Include="Satchel">
+		  <HintPath>$(HollowKnightModsDirectory)\Satchel\Satchel.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Hkmp">
+		  <HintPath>$(HollowKnightModsDirectory)\Hkmp\Hkmp.dll</HintPath>
+	  </Reference>
+	  <Reference Include="HkmpPouch">
+		  <HintPath>$(HollowKnightModsDirectory)\HkmpPouch\HkmpPouch.dll</HintPath>
+	  </Reference>
   </ItemGroup>
   <ItemGroup>
       <EmbeddedResource Include="hat.png" />

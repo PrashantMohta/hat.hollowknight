@@ -1,0 +1,33 @@
+﻿using HkmpPouch;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Hat.Hkmp
+{
+    public class GetHatListEvent : PipeEvent
+    {
+        public static string Name = "GetHatListEvent";
+
+        public override string GetName() => Name;
+
+        public override string ToString()
+        {
+            return "";
+        }
+    }
+    public class GetHatListEventFactory : IEventFactory
+    {
+        public static GetHatListEventFactory Instance { get; internal set; } = new GetHatListEventFactory();
+        public PipeEvent FromSerializedString(string serializedData)
+        {
+            var pEvent = new GetHatListEvent();
+            return pEvent;
+        }
+
+        public string GetName() => GetHatListEvent.Name;
+    }
+
+}
