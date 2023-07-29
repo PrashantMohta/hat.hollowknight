@@ -41,11 +41,11 @@ namespace Hat.Hkmp
         private void LoadCachedHats()
         {
             var path = AssemblyUtils.getCurrentDirectory();
-            var cacheDirectory = Path.Combine(path, "HkmpHatsCache");
+            var cacheDirectory = Path.Combine(path, Constants.HKMP_CACHE_FOLDER_NAME);
             IoUtils.EnsureDirectory(cacheDirectory);
             foreach (var file in Directory.GetFiles(cacheDirectory))
             {
-                if(Path.GetExtension(file).ToLower() != ".png")
+                if(Path.GetExtension(file).ToLower() != Constants.FILE_EXTENSION)
                 {
                     continue;
                 }
@@ -85,7 +85,7 @@ namespace Hat.Hkmp
         private void RecievedFile(RequestedFileEvent e)
         {
             var path = AssemblyUtils.getCurrentDirectory();
-            var cacheDirectory = Path.Combine(path, "HkmpHatsCache");
+            var cacheDirectory = Path.Combine(path, Constants.HKMP_CACHE_FOLDER_NAME);
             var filePath = Path.Combine(cacheDirectory, e.fileHash);
             IoUtils.EnsureDirectory(cacheDirectory);
             File.WriteAllBytes(filePath, e.ExtraBytes);

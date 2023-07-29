@@ -20,7 +20,7 @@ namespace Hat.Hkmp
         {
             if (player.IsInLocalScene)
             {
-                var playerHat = player.PlayerContainer.FindGameObjectInChildren("Player Prefab").GetAddComponent<PlayerHatBehaviour>();
+                var playerHat = player.PlayerContainer.FindGameObjectInChildren("Player Prefab").GetAddComponent<RemotePlayerHatBehaviour>();
                 playerHat.SetPlayer(player.Id);
             }
         }
@@ -43,14 +43,13 @@ namespace Hat.Hkmp
         private void ClientManager_DisconnectEvent()
         {
             hatManager = null;
-            Hat.Instance.resetLocalHat();
+            Hat.LocalHatManager.ResetLocalHat();
         }
 
         private void whenServerCounterPartAvailable(bool isAvailable)
         {
             if (isAvailable && hatManager == null) {
                 hatManager = new HatManager(pipe);
-                //pipe.SendToServer(new RequestFileEvent { fileHash = "hat.png" });
             }
         }
 

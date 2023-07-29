@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Hat.Hkmp
 {
-    internal class PlayerHatBehaviour : MonoBehaviour
+    internal class RemotePlayerHatBehaviour : MonoBehaviour
     {
         ushort playerId;
         string hatFile;
@@ -60,7 +60,7 @@ namespace Hat.Hkmp
                 hat = new GameObject(" hat");
                 hat.SetActive(true);
                 hat.SetScale(transform.localScale.y);
-                hat.transform.position = transform.position + new Vector3(Hat.Instance.settings.offsetX, Hat.Instance.settings.offsetY, Hat.Instance.settings.offsetZ);
+                hat.transform.position = transform.position + Hat.Instance.Settings.Offset;
                 hat.transform.SetParent(transform, true);
 
             }

@@ -22,7 +22,7 @@ namespace Hat.Hkmp
             else if (Array.IndexOf(HatMultiplayerClient.hatManager.hats, arguments[1]) >= 0)
             {
                 HatMultiplayerClient.pipe.SendToServer(new PlayerHatEvent { hat = arguments[1] });
-                HatMultiplayerClient.hatManager.GetTextureByHash(arguments[1], Hat.Instance.changeLocalHat);
+                HatMultiplayerClient.hatManager.GetTextureByHash(arguments[1], Hat.LocalHatManager.SetHatTexture);
             }
             else {
                 HatMultiplayerClient.pipe.ClientApi.UiManager.ChatBox.AddMessage("Invalid!");

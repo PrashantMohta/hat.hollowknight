@@ -53,11 +53,11 @@ namespace Hat.Hkmp
         private void PopulateHatList()
         {
             var path = AssemblyUtils.getCurrentDirectory();
-            var cacheDirectory = Path.Combine(path, "HkmpHats");
+            var cacheDirectory = Path.Combine(path, Constants.HKMP_HATS_FOLDER_NAME);
             IoUtils.EnsureDirectory(cacheDirectory);
             foreach (var file in Directory.GetFiles(cacheDirectory))
             {
-                if (Path.GetExtension(file).ToLower() != ".png")
+                if (Path.GetExtension(file).ToLower() != Constants.FILE_EXTENSION)
                 {
                     continue;
                 }
