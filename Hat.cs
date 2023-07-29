@@ -1,19 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
+﻿using Hat.Hkmp;
+using Hkmp.Api.Server;
+using Modding;
+using Satchel;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-
-using GlobalEnums;
-using Modding;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
-using Newtonsoft.Json;
-using Satchel;
 using static Hat.Utils;
-using Hat.Hkmp;
-using Hkmp.Api.Server;
 
 namespace Hat
 {

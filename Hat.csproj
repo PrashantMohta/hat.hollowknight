@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VanillaFiles>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</VanillaFiles>
-    <ModdingAPi>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</ModdingAPi>
-    <HollowKnightModsDirectory>D:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods</HollowKnightModsDirectory>
+    <VanillaFiles>E:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</VanillaFiles>
+    <ModdingAPi>E:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed</ModdingAPi>
+    <HollowKnightModsDirectory>E:\SteamLibrary\steamapps\common\Hollow Knight\hollow_knight_Data\Managed\Mods</HollowKnightModsDirectory>
   </PropertyGroup>
 
   <ItemGroup>

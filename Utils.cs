@@ -1,15 +1,9 @@
+using Newtonsoft.Json;
+using Satchel;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Collections;
-using System.Collections.Generic;
-
-using GlobalEnums;
-using Modding;
 using UnityEngine;
-using Newtonsoft.Json;
-
-using Satchel;
 
 namespace Hat
 {
