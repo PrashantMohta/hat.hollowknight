@@ -71,10 +71,21 @@ namespace Hat.Hkmp
                 }
             }
         }
-
+        private string[] GetHatList()
+        {
+            List<string> hats = new List<string>();
+            foreach (var file in cachedFiles.Keys)
+            {
+                if (Path.GetExtension(file).ToLower() == Constants.FILE_EXTENSION)
+                {
+                    hats.Add(file);
+                }
+            }
+            return hats.ToArray();
+        }
         private void HatListRequested(GetHatListEvent obj)
         {
-            pipe.SendToPlayer(obj.FromPlayer, new GotHatListEvent { Hatlist = cachedFiles.Keys.ToArray() });
+            pipe.SendToPlayer(obj.FromPlayer, new GotHatListEvent { Hatlist = GetHatList() });
 
             foreach (var player in pipe.ServerApi.ServerManager.Players)
             {

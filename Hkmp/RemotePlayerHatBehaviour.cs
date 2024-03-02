@@ -59,7 +59,7 @@ namespace Hat.Hkmp
             if (hat == null) { 
                 hat = new GameObject(" hat");
                 hat.SetActive(true);
-                hat.SetScale(transform.localScale.y);
+                hat.SetScale(transform.localScale.x, transform.localScale.y);
                 hat.transform.position = transform.position + Hat.Instance.Settings.Offset;
                 hat.transform.SetParent(transform, true);
 

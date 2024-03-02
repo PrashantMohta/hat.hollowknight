@@ -51,6 +51,7 @@ namespace Hat.Hkmp
             if (isAvailable && hatManager == null) {
                 hatManager = new HatManager(pipe);
             }
+            Hat.LocalHatManager.HideHat();
         }
 
     }

@@ -67,7 +67,7 @@ namespace Hat
 
             var hatPath = Path.Combine(CurrentDirectory, Constants.DEFAULT_HAT);
             if(!File.Exists(hatPath)) {
-                ExtractHatPng(hatPath);
+                ExtractFile(hatPath);
             }
 
             Loadhats(); // load for world mode

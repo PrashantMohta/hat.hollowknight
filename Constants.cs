@@ -7,7 +7,7 @@
 
         internal static string HAT_FOLDER_NAME = "Hats";
 
-        internal static string HKMP_HATS_FOLDER_NAME = "HkmpHats";
+        internal static string HKMP_HATS_FOLDER_NAME = "Hats";
         internal static string HKMP_CACHE_FOLDER_NAME = "HkmpHatCache";
 
         internal static string DEFAULT_HAT = "hat.png";

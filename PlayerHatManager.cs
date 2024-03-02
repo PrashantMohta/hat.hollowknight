@@ -1,4 +1,5 @@
 ﻿using Satchel;
+using System;
 using UnityEngine;
 using static Hat.Utils;
 
@@ -14,6 +15,7 @@ namespace Hat
             CreateHat();
             SetHatTexture(defaultHatTexture);
         }
+
         public void CreateHat()
         {
             HatGo = new GameObject("herohat");
@@ -29,12 +31,18 @@ namespace Hat
             SpriteRenderer sr = HatGo.GetAddComponent<SpriteRenderer>();
             sr.sprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 64f, 0, SpriteMeshType.FullRect);
             sr.color = new Color(1f, 1f, 1f, 1.0f);
+            HatGo.SetActive(true);
         }
 
         public void ResetLocalHat()
         {
             SetHatTexture(defaultHatTexture);
+            HatGo.SetActive(true);
         }
 
+        internal void HideHat()
+        {
+            HatGo.SetActive(false);
+        }
     }
 }

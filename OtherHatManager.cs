@@ -72,6 +72,7 @@ namespace Hat
 
         private void CreateHatConditionally(GameObject gameObj)
         {
+            if(Hat.Instance.HatTextures.Count == 0) { return; }
             if (gameObj.GetComponent<HatState>() != null) { return; }
             if (Hat.Instance.Settings.ReduceChaos)
             {

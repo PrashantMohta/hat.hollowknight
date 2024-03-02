@@ -28,7 +28,7 @@ namespace Hat
             gameObject.transform.localScale = localScale;
         }
 
-        internal static void ExtractHatPng(string path){
+        internal static void ExtractFile(string path){
             
             Assembly asm = Assembly.GetExecutingAssembly();
             foreach (string res in asm.GetManifestResourceNames())
