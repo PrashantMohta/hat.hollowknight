@@ -91,8 +91,14 @@ namespace Hat
 
         public void HeroControllerStart(On.HeroController.orig_Start orig,HeroController self){
             orig(self);
-            LocalHatManager = self.gameObject.GetAddComponent<PlayerHatManager>();
-            OtherHatManager = self.gameObject.GetAddComponent<OtherHatManager>();
+            if(LocalHatManager == null)
+            {
+                LocalHatManager = self.gameObject.GetAddComponent<PlayerHatManager>();
+            }
+            if(OtherHatManager == null)
+            {
+                OtherHatManager = self.gameObject.GetAddComponent<OtherHatManager>();
+            }
         }
 
 

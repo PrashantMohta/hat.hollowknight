@@ -18,7 +18,7 @@ namespace Hat
 
         public void CreateHat()
         {
-            if(HatGo == null) { 
+            if(HatGo == null && gameObject == HeroController.instance.gameObject) { 
                     HatGo = new GameObject("herohat");
                     GameObject.DontDestroyOnLoad(HatGo);
                     HatGo.SetScale(HeroController.instance.gameObject.transform.localScale.y);
