@@ -1,24 +1,18 @@
-using System;
-using System.IO;
-using System.Reflection;
-using System.Collections;
-using System.Collections.Generic;
-
-using GlobalEnums;
-using Modding;
-using UnityEngine;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using UnityEngine;
+using Modding.Converters;
 
 namespace Hat
 {
     public class Setting{
-        public string hat = "hat.png";
-        public float offsetX  = 0f;
-        public float offsetY = 1.1f;
-        public float offsetZ = -0.5f;
-        public bool enableWorld = true;
-        public bool reduceChaos = true;
-        public List<string> limitTo = new List<string>{
+        public string Hat = Constants.DEFAULT_HAT;
+        [JsonConverter(typeof(Vector3Converter))]
+        public Vector3 Offset = new Vector3(0f, 0.5f, -0.5f); //new Vector3(0f, 1.1f, -0.5f);
+
+        public bool EnableWorld = false;
+        public bool ReduceChaos = true;
+        public List<string> LimitTo = new List<string>{
                                                         "npc",
                                                         "boss",
                                                         "shop",
@@ -26,21 +20,9 @@ namespace Hat
                                                         "Weaverling",
                                                         "Grimmchild"
                                                     };
-        public bool verbose = false;
-        public bool randomWorldHats = true;
+        public bool Verbose = false;
+        public bool RandomWorldHats = true;
         public Setting(){}
-        public Setting(string hat,float offsetX,float offsetY,float offsetZ,bool enableWorld,bool randomWorldHats,bool reduceChaos,List<string> limitTo,bool verbose){
-            this.hat = hat;
-            this.offsetX = offsetX;
-            this.offsetY = offsetY;
-            this.offsetZ = offsetZ;
-
-            this.enableWorld = enableWorld;
-            this.randomWorldHats = randomWorldHats;
-            this.reduceChaos = reduceChaos;
-            this.limitTo = limitTo;
-            this.verbose = verbose;
-        }
     }
     
 }
