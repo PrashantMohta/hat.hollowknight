@@ -29,7 +29,6 @@ namespace Hat.Hkmp
         }
         private void PlayerhatUpdated(object sender, EventArgs e)
         {
-            Modding.Logger.Log("  updated  ");
             PlayerhatUpdated();
         }
 
@@ -49,7 +48,6 @@ namespace Hat.Hkmp
         {
             if(gameObject == null || transform == null || hatTexture == null)
             {
-                Modding.Logger.Log("  null?  ");
                 return;
             }
             if(hat == null)

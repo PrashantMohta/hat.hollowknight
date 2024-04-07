@@ -18,11 +18,13 @@ namespace Hat
 
         public void CreateHat()
         {
-            HatGo = new GameObject("herohat");
-            GameObject.DontDestroyOnLoad(HatGo);
-            HatGo.SetScale(HeroController.instance.gameObject.transform.localScale.y);
-            HatGo.transform.position = HeroController.instance.gameObject.transform.position + Hat.Instance.Settings.Offset;
-            HatGo.transform.SetParent(HeroController.instance.gameObject.transform, true);
+            if(HatGo == null) { 
+                    HatGo = new GameObject("herohat");
+                    GameObject.DontDestroyOnLoad(HatGo);
+                    HatGo.SetScale(HeroController.instance.gameObject.transform.localScale.y);
+                    HatGo.transform.position = HeroController.instance.gameObject.transform.position + Hat.Instance.Settings.Offset;
+                    HatGo.transform.SetParent(HeroController.instance.gameObject.transform, true);
+            }
 
         }
 
