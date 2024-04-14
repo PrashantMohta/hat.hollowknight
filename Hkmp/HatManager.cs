@@ -1,4 +1,5 @@
 ﻿using HkmpPouch;
+using HkmpPouch.Multipart;
 using Satchel;
 using System;
 using System.Collections.Generic;
@@ -19,18 +20,46 @@ namespace Hat.Hkmp
         private Dictionary<string, List<Action<Texture2D>>> pendingCallback = new Dictionary<string, List<Action<Texture2D>>>();
 
         public EventHandler<EventArgs> playerHatUpdated;
+        private MultipartContentManager multipartContentManager;
 
         public string[] hats = new string[0];
         public int currentlyLoading = 0;
         public HatManager(PipeClient pipe)
         {
             this.pipe = pipe;
-            pipe.On(RequestedFileEventFactory.Instance).Do<RequestedFileEvent>(RecievedFile);
+            multipartContentManager = new MultipartContentManager(pipe);
+            multipartContentManager.ContentReceivedHandler = HatReceivedHandler;
+            multipartContentManager.SendContentRequest = HatRequestSender;
             pipe.On(GotHatListEventFactory.Instance).Do<GotHatListEvent>(GotHatList);
             pipe.On(PlayerHatEventFactory.Instance).Do<PlayerHatEvent>(PlayerHatUpdated);
 
             LoadCachedHats();
             PopulateTextureList();
+        }
+
+        private void HatRequestSender(RequestMultipartContent content)
+        {
+            pipe.SendToServer(content);
+        }
+
+        private void HatReceivedHandler(RequestedMultipartContent content)
+        {
+            var path = AssemblyUtils.getCurrentDirectory();
+            var cacheDirectory = Path.Combine(path, Constants.HKMP_CACHE_FOLDER_NAME);
+            var filePath = Path.Combine(cacheDirectory, content.ContentId);
+            IoUtils.EnsureDirectory(cacheDirectory);
+            Modding.Logger.Log($"{content.ContentId} byte size {content.ExtraBytes.Length}");
+            File.WriteAllBytes(filePath, content.ExtraBytes);
+            var tex = TextureUtils.LoadTextureFromFile(filePath);
+            cachedFiles[content.ContentId] = tex;
+            if (pendingCallback.ContainsKey(content.ContentId))
+            {
+                foreach (var cb in pendingCallback[content.ContentId])
+                {
+                    cb(cachedFiles[content.ContentId]);
+                }
+                pendingCallback[content.ContentId].Clear();
+            }
         }
 
         private void PlayerHatUpdated(PlayerHatEvent obj)
@@ -83,47 +112,7 @@ namespace Hat.Hkmp
             LoadNextHat();
         }
         private Dictionary<string, Dictionary<ushort, byte[]>> multipart = new();
-        private void RecievedFile(RequestedFileEvent e)
-        {
-            var path = AssemblyUtils.getCurrentDirectory();
-            var cacheDirectory = Path.Combine(path, Constants.HKMP_CACHE_FOLDER_NAME);
-            var filePath = Path.Combine(cacheDirectory, e.fileHash);
-            IoUtils.EnsureDirectory(cacheDirectory);
-            Modding.Logger.Log($"byte length {e.ExtraBytes.Length} data : {String.Join(",", Array.ConvertAll<byte, String>(e.ExtraBytes, Convert.ToString))}");
-            if (!multipart.ContainsKey(e.fileHash))
-            {
-                multipart[e.fileHash] = new ();
-            }
-            multipart[e.fileHash][e.partNumber] = e.ExtraBytes;
-            if (multipart[e.fileHash].Count == e.totalParts)
-            {
-                var totalData = new List<byte>();
-                foreach ( var part in multipart[e.fileHash])
-                {
-                    totalData.AddRange(part.Value);
-                }
-                File.WriteAllBytes(filePath, totalData.ToArray());
-                var tex = TextureUtils.LoadTextureFromFile(filePath);
-                cachedFiles[e.fileHash] = tex;
-                if (pendingCallback.ContainsKey(e.fileHash))
-                {
-                    foreach (var cb in pendingCallback[e.fileHash])
-                    {
-                        cb(cachedFiles[e.fileHash]);
-                    }
-                    pendingCallback[e.fileHash].Clear();
-                }
-            } else
-            {
-                //request the next pending part
-                ushort nextPart = (ushort)(e.partNumber + 1);
-                Modding.Logger.Log($"request next part {nextPart},{nextPart < e.totalParts},{multipart[e.fileHash].ContainsKey(nextPart)}");
-                if (nextPart < e.totalParts && !multipart[e.fileHash].ContainsKey(nextPart))
-                {
-                    pipe.SendToServer(new RequestFileEvent { fileHash = e.fileHash , partNumber = nextPart});
-                }
-            }
-        }
+
         public void GetTextureByHash(string fileHash, Action<Texture2D> callback)
         {
             Texture2D texture;
@@ -135,7 +124,7 @@ namespace Hat.Hkmp
             else
             {
                 pipe.Logger.Info("RequestFileEvent");
-                pipe.SendToServer(new RequestFileEvent { fileHash = fileHash });
+                multipartContentManager.RequestContent(fileHash);
                 if (!pendingCallback.ContainsKey(fileHash))
                 {
                     pendingCallback.Add(fileHash, new List<Action<Texture2D>> { callback });
