@@ -1,18 +1,23 @@
 ﻿using HkmpPouch;
+using System.Globalization;
 
 namespace Hat.Hkmp
 {
     public class RequestFileEvent : PipeEvent
     {
+        public RequestFileEvent()
+        {
+            base.IsReliable = true;
+        }
         public static string Name = "RequestFileEvent";
 
         public string fileHash = "";
-
+        public ushort partNumber = 0;
         public override string GetName()=> Name;
 
         public override string ToString()
         {
-            return fileHash;
+            return $"{fileHash},{partNumber}";
         }
     }
     public class RequestFileEventFactory : IEventFactory
@@ -21,7 +26,9 @@ namespace Hat.Hkmp
         public PipeEvent FromSerializedString(string serializedData)
         {
             var pEvent = new RequestFileEvent();
-            pEvent.fileHash = serializedData;
+            var Split = serializedData.Split(',');
+            pEvent.fileHash = Split[0];
+            pEvent.partNumber = ushort.Parse(Split[1], CultureInfo.InvariantCulture);
             return pEvent;
         }
 

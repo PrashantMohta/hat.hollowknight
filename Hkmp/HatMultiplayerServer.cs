@@ -96,9 +96,21 @@ namespace Hat.Hkmp
             }
         }
 
-        private void SendBytesToPlayer(ushort playerId,string filehash, byte[] data)
+        private void SendBytesToPlayer(ushort playerId,string filehash,ushort partNumber, byte[] data)
         {
-            pipe.SendToPlayer(playerId, new RequestedFileEvent { fileHash = filehash, ExtraBytes = data});
+            ushort partSize = 100;
+            ushort totalParts = (ushort)Math.Ceiling((float)data.Length/partSize);
+            pipe.Logger.Info($"Sending {filehash} part {partNumber}/{totalParts}");
+            var currentIndex = partNumber * partSize;
+            List<byte> currentBuffer = new List<byte>();
+            var readPos = 0;
+            while(currentIndex + readPos < data.Length && readPos < partSize)
+            {
+                currentBuffer.Add(data[currentIndex + readPos]);
+                readPos++;
+            }
+            pipe.SendToPlayer(playerId, new RequestedFileEvent { fileHash = filehash, partNumber = partNumber, totalParts = totalParts, ExtraBytes = currentBuffer.ToArray() });
+            pipe.Logger.Info($"SendBytesToPlayer end!");
         }
 
         private void FileRequested(RequestFileEvent e)
@@ -108,7 +120,11 @@ namespace Hat.Hkmp
             {
                 if(cachedFiles.TryGetValue(e.fileHash, out var data))
                 {
-                    SendBytesToPlayer(e.FromPlayer, e.fileHash, data);
+                    pipe.Logger.Info($"File found in cache : {e.fileHash}");
+                    SendBytesToPlayer(e.FromPlayer, e.fileHash,e.partNumber, data);
+                } else
+                {
+                    pipe.Logger.Info($"File not found in cache : {e.fileHash}");
                 }
             } else
             {

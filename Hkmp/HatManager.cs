@@ -3,6 +3,7 @@ using Satchel;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Hat.Hkmp
@@ -81,23 +82,46 @@ namespace Hat.Hkmp
             currentlyLoading++;
             LoadNextHat();
         }
-
+        private Dictionary<string, Dictionary<ushort, byte[]>> multipart = new();
         private void RecievedFile(RequestedFileEvent e)
         {
             var path = AssemblyUtils.getCurrentDirectory();
             var cacheDirectory = Path.Combine(path, Constants.HKMP_CACHE_FOLDER_NAME);
             var filePath = Path.Combine(cacheDirectory, e.fileHash);
             IoUtils.EnsureDirectory(cacheDirectory);
-            File.WriteAllBytes(filePath, e.ExtraBytes);
-            var tex = TextureUtils.LoadTextureFromFile(filePath);
-            cachedFiles[e.fileHash] = tex;
-            if (pendingCallback.ContainsKey(e.fileHash))
+            Modding.Logger.Log($"byte length {e.ExtraBytes.Length} data : {String.Join(",", Array.ConvertAll<byte, String>(e.ExtraBytes, Convert.ToString))}");
+            if (!multipart.ContainsKey(e.fileHash))
             {
-                foreach(var cb in pendingCallback[e.fileHash])
+                multipart[e.fileHash] = new ();
+            }
+            multipart[e.fileHash][e.partNumber] = e.ExtraBytes;
+            if (multipart[e.fileHash].Count == e.totalParts)
+            {
+                var totalData = new List<byte>();
+                foreach ( var part in multipart[e.fileHash])
                 {
-                    cb(cachedFiles[e.fileHash]);
+                    totalData.AddRange(part.Value);
                 }
-                pendingCallback[e.fileHash].Clear();
+                File.WriteAllBytes(filePath, totalData.ToArray());
+                var tex = TextureUtils.LoadTextureFromFile(filePath);
+                cachedFiles[e.fileHash] = tex;
+                if (pendingCallback.ContainsKey(e.fileHash))
+                {
+                    foreach (var cb in pendingCallback[e.fileHash])
+                    {
+                        cb(cachedFiles[e.fileHash]);
+                    }
+                    pendingCallback[e.fileHash].Clear();
+                }
+            } else
+            {
+                //request the next pending part
+                ushort nextPart = (ushort)(e.partNumber + 1);
+                Modding.Logger.Log($"request next part {nextPart},{nextPart < e.totalParts},{multipart[e.fileHash].ContainsKey(nextPart)}");
+                if (nextPart < e.totalParts && !multipart[e.fileHash].ContainsKey(nextPart))
+                {
+                    pipe.SendToServer(new RequestFileEvent { fileHash = e.fileHash , partNumber = nextPart});
+                }
             }
         }
         public void GetTextureByHash(string fileHash, Action<Texture2D> callback)
